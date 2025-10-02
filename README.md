@@ -73,7 +73,7 @@ types (id, name)
 wings (id, owner_id, type_id, profit, name)
 places (id, location, scale)
 moves (id, wing_id, place_id, price, dt)
-
+```
 
 ## 🚀 Quick Start Guide
 
@@ -82,13 +82,17 @@ moves (id, wing_id, place_id, price, dt)
 git clone <repository-url>
 cd museum-api
 python -m venv .venv
+
 # Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 ```
+### Step 2: Install requirements
+```bash
 pip install -r requirements.txt
 ```
 
-```
+### Step 3: Run application
+```bash
 python run.py
 ```
 
