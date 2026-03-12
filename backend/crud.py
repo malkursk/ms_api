@@ -154,7 +154,7 @@ def get_most_popular_type(db: Session):
     .group_by(models.Type.name)
     .order_by(desc('wings_count'))
     .first())
-    return result
+    return {"name": result[0], "wings_count": result[1]}
 
 def get_wing_move_frequency(db: Session, wing_id: int):
     moves_count = db.query(models.Move).filter(models.Move.wing_id == wing_id).count()
@@ -170,3 +170,25 @@ def get_wing_move_frequency(db: Session, wing_id: int):
             "avg_days_between_moves": avg_days_between_moves
         }
     return None
+
+def get_owners_with_specific_lastname(db: Session):
+    result = (
+        db.query(
+            models.Owner.id,
+            models.Owner.last_name,
+            models.Owner.first_name,
+            models.Owner.middle_name
+        )
+        .filter(models.Owner.last_name.like('%ова'))
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "last_name": r[1],
+            "first_name": r[2],
+            "middle_name": r[3]
+        }
+        for r in result
+    ]
+
