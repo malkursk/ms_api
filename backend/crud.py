@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 import models
 import schemas
+import sqlite3
+from sqlalchemy import func, desc
 
 def get_owner_with_most_wings(db: Session):
     result = (db.query(
@@ -63,6 +65,86 @@ def delete_move(db: Session, move_id: int):
         db.commit()
         return True
     return False
+
+#TODO Мои задания
+def get_places_with_scale_above(db: Session, min_scale: float = 1.5):
+    places = (
+        db.query(models.Place)
+        .filter(models.Place.scale > min_scale)
+        .all()
+    )
+
+    return [
+        {
+            "id": place.id,
+            "location": place.location,
+            "scale": place.scale,
+        }
+        for place in places
+    ]
+
+def get_top3_moscow_places(db: Session):
+    places = (
+        db.query(models.Place)
+        .filter(models.Place.location.like('%Москва%'))
+        .order_by(models.Place.scale.desc())
+        .limit(3)
+        .all()
+    )
+
+    return [
+        {
+            "id": place.id,
+            "location": place.location,
+            "scale": place.scale,
+        }
+        for place in places
+    ]
+
+def get_campaign_budget_forecast(db: Session):
+    month_expr = func.strftime('%Y-%m', models.Move.dt)
+
+    monthly_subquery = (
+        db.query(
+            month_expr.label("month"),
+            func.sum(models.Move.price).label("total_cost")
+        )
+        .group_by(month_expr)
+        .subquery()
+    )
+
+    rows = (
+        db.query(
+            monthly_subquery.c.month,
+            monthly_subquery.c.total_cost,
+            func.lag(monthly_subquery.c.total_cost)
+                .over(order_by=monthly_subquery.c.month)
+                .label("previous_month_cost")
+        )
+        .order_by(monthly_subquery.c.month.desc())
+        .all()
+    )
+
+    result = []
+    for row in rows:
+        previous_cost = float(row.previous_month_cost) if row.previous_month_cost is not None else None
+        current_cost = float(row.total_cost) if row.total_cost is not None else 0.0
+
+        if previous_cost is not None and previous_cost != 0:
+            growth_percent = ((current_cost - previous_cost) / previous_cost) * 100
+        else:
+            growth_percent = None
+
+        result.append({
+            "month": row.month,
+            "total_cost": current_cost,
+            "previous_month_cost": previous_cost,
+            "growth_percent": round(growth_percent, 2) if growth_percent is not None else None
+        })
+
+    return result
+
+#TODO
 
 # Остальные функции остаются без изменений
 def get_owner(db: Session, owner_id: int):
@@ -171,6 +253,21 @@ def get_wing_move_frequency(db: Session, wing_id: int):
         }
     return None
 
+def get_places_with_high_scale(db: Session, min_scale: float = 1.5):
+    places = db.query(models.Place).filter(models.Place.scale > min_scale).all()
+    
+    with db.bind.connect() as conn:
+        cursor = conn.execute(text("""
+            SELECT * FROM places 
+            WHERE scale > :min_scale
+        """), {"min_scale": min_scale})
+        results = cursor.fetchall()
+        print(f"Найдено мест с масштабом > {min_scale}: {len(results)}")
+        for row in results:
+            print(dict(row._mapping))
+    
+    return places
+
 def get_owners_with_specific_lastname(db: Session):
     result = (
         db.query(
@@ -191,4 +288,3 @@ def get_owners_with_specific_lastname(db: Session):
         }
         for r in result
     ]
-
