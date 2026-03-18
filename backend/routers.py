@@ -202,3 +202,11 @@ def get_wing_move_frequency(wing_id: int, db: Session = Depends(get_db)):
     if not result:
         raise HTTPException(status_code=404, detail="Перемещения для этого экспоната не найдены")
     return create_response_with_sql(result)
+
+@router.get("/analytics/owners_with_specific_lastname", tags=["📊 Аналитика"])
+def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
+    """Найти всех владельцев, фамилии которых заканчиваются на «ова» """
+    result = crud.get_owners_with_specific_lastname(db)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Таких фамилий нет")
+    return create_response_with_sql(result)
