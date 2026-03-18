@@ -203,6 +203,26 @@ def get_wing_move_frequency(wing_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Перемещения для этого экспоната не найдены")
     return create_response_with_sql(result)
 
+#TODO Мои задания
+
+@router.get("/analytics/places-scale-above", tags=["📊 Аналитика"])
+def get_places_with_scale_above(min_scale: float = 1.5, db: Session = Depends(get_db)):
+    result = crud.get_places_with_scale_above(db, min_scale=min_scale)
+    return create_response_with_sql(result)
+
+
+@router.get("/analytics/top3-moscow-places", tags=["📊 Аналитика"])
+def get_top3_moscow_places(db: Session = Depends(get_db)):
+    result = crud.get_top3_moscow_places(db)
+    return create_response_with_sql(result)
+
+
+@router.get("/analytics/campaign-budget-forecast", tags=["📊 Аналитика"])
+def get_campaign_budget_forecast(db: Session = Depends(get_db)):
+    result = crud.get_campaign_budget_forecast(db)
+    return create_response_with_sql(result)
+
+
 @router.get("/analytics/owners_with_specific_lastname", tags=["📊 Аналитика"])
 def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     """Найти всех владельцев, фамилии которых заканчиваются на «ова» """
