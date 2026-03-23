@@ -210,3 +210,12 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+#Вывести площадки с масштабом больше 1.5
+@router.get("/analytics/places_with_scale_gt_1_5", tags=["📊 Аналитика"])
+def get_places_with_scale_gt_1_5(db: Session = Depends(get_db)):
+    """Найти все места с масштабом больше 1.5"""
+    result = crud.get_places_with_scale_gt_1_5(db)
+    if not result:  # Если список пустой
+        raise HTTPException(status_code=404, detail="Мест с масштабом больше 1.5 не найдено")
+    return create_response_with_sql(result)
