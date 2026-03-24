@@ -210,3 +210,21 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+@router.get("/analytics/exhibit_types_izdelie", tags=["📊 Аналитика"])
+def get_exhibit_types_izdelie(db: Session = Depends(get_db)):
+    """Простой уровень: Вывести типы экспонатов, содержащие слово 'изделие'"""
+    result = crud.get_exhibit_types_izdelie(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Типы экспонатов со словом 'изделие' не найдены")
+    return create_response_with_sql(result)
+
+
+@router.get("/analytics/exhibit_types_counts", tags=["📊 Аналитика"])
+def get_exhibit_types_counts(db: Session = Depends(get_db)):
+    """Продвинутый уровень: Найти типы экспонатов и количество предметов каждого типа"""
+    result = crud.get_exhibit_types_counts(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Данные о типах экспонатов не найдены")
+    return create_response_with_sql(result)
+

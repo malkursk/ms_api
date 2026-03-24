@@ -192,3 +192,40 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+def get_exhibit_types_izdelie(db: Session):
+    result = (
+        db.query(
+            models.Type.id,
+            models.Type.name
+        )
+        .filter(models.Type.name.ilike("%изделие%"))
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "name": r[1]
+        }
+        for r in result
+    ]
+
+def get_exhibit_types_counts(db: Session):
+    result = (
+        db.query(
+            models.Type.id,
+            models.Type.name,
+            func.count(models.Wing.id).label("items_count")
+        )
+        .outerjoin(models.Wing, models.Type.id == models.Wing.type_id)
+        .group_by(models.Type.id)
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "name": r[1],
+            "items_count": r[2]
+        }
+        for r in result
+    ]
+
