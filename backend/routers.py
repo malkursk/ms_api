@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
-import crud, schemas
-from database import get_db, get_sql_queries
-import models
+from datetime import datetime, timedelta
+from sqlalchemy import func, desc
+from . import crud, schemas, models
+from .database import get_db, get_sql_queries
 
 router = APIRouter()
 
@@ -210,3 +211,99 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+
+# задание 3 простое
+@router.get("/moves/expensive", tags=["Перемещения"])
+def read_expensive_moves(
+    db: Session = Depends(get_db),
+    threshold: float = 30000,
+    limit: int = 100,
+    offset: int = 0,
+):
+    """Получить все перемещения дороже 30000.
+
+    Возвращает поля: `move_date`, `place_name`, `price`.
+    """
+    # Select only needed columns and add pagination to avoid returning huge result sets
+    results = (
+        db.query(models.Move.dt, models.Place.location, models.Move.price)
+        .join(models.Place, models.Move.place_id == models.Place.id)
+        .filter(models.Move.price > threshold)
+        .order_by(models.Move.price.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    data: List[Dict[str, Any]] = [
+        {
+            "move_date": r[0].isoformat() if r[0] else None,
+            "place_name": r[1],
+            "price": r[2],
+        }
+        for r in results
+    ]
+
+    return create_response_with_sql(data)
+
+
+# задание 3 продвинутый уровень
+@router.get("/analytics/top5-expensive-year", tags=["📊 Аналитика"])
+def top5_expensive_last_year(db: Session = Depends(get_db)):
+    """Возвращает 5 самых дорогих перемещений за последний год: `move_date`, `place_name`, `price`."""
+    cutoff = datetime.utcnow() - timedelta(days=365)
+    results = (
+        db.query(models.Move.dt, models.Place.location, models.Move.price)
+        .join(models.Place, models.Move.place_id == models.Place.id)
+        .filter(models.Move.dt >= cutoff)
+        .order_by(models.Move.price.desc())
+        .limit(5)
+        .all()
+    )
+
+    data: List[Dict[str, Any]] = [
+        {
+            "move_date": r[0].isoformat() if r[0] else None,
+            "place_name": r[1],
+            "price": r[2],
+        }
+        for r in results
+    ]
+
+    return create_response_with_sql(data)
+
+
+# задание 16 
+@router.get("/analytics/diverse-owners", tags=["📊 Аналитика"])
+def get_diverse_owners(db: Session = Depends(get_db), min_types: int = 3):
+    """Найти владельцев с разнообразными коллекциями.
+
+    Возвращает: `owner_full_name`, `unique_types_count`, `total_items_count`.
+    """
+    results = (
+        db.query(
+            models.Owner.id,
+            models.Owner.first_name,
+            models.Owner.last_name,
+            models.Owner.middle_name,
+            func.count(func.distinct(models.Wing.type_id)).label('unique_types_count'),
+            func.count(models.Wing.id).label('total_items_count'),
+        )
+        .join(models.Wing, models.Owner.id == models.Wing.owner_id)
+        .group_by(models.Owner.id)
+        .having(func.count(func.distinct(models.Wing.type_id)) > min_types)
+        .order_by(desc('unique_types_count'), desc('total_items_count'))
+        .all()
+    )
+
+    data: List[Dict[str, Any]] = []
+    for r in results:
+        owner_full_name = " ".join(filter(None, [r[2], r[1], r[3]]))
+        data.append({
+            "owner_full_name": owner_full_name,
+            "unique_types_count": int(r[4]) if r[4] is not None else 0,
+            "total_items_count": int(r[5]) if r[5] is not None else 0,
+        })
+
+    return create_response_with_sql(data)

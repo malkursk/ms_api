@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from database import engine
-import models
-from routers import router
+from .database import engine
+from . import models
+from .routers import router
 
 # Создаем таблицы
 models.Base.metadata.create_all(bind=engine)

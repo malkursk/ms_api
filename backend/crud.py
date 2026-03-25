@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
-import models
-import schemas
+from . import models
+from . import schemas
 
 def get_owner_with_most_wings(db: Session):
     result = (db.query(

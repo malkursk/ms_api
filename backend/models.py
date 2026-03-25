@@ -53,7 +53,9 @@ class Move(Base):
     id = Column(Integer, primary_key=True, index=True)
     wing_id = Column(Integer, ForeignKey("wings.id"), nullable=False)
     place_id = Column(Integer, ForeignKey("places.id"), nullable=False)
-    price = Column(Float, nullable=False)
+    wing_id = Column(Integer, ForeignKey("wings.id"), nullable=False, index=True)
+    place_id = Column(Integer, ForeignKey("places.id"), nullable=False, index=True)
+    price = Column(Float, nullable=False, index=True)
     dt = Column(DateTime, default=datetime.utcnow)
     
     wing = relationship("Wing", back_populates="moves")

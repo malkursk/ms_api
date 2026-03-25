@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from faker import Faker
 import random
 from datetime import datetime, timedelta, date
-from database import SessionLocal
-import models
+from .database import SessionLocal
+from . import models
 
 fake = Faker('ru_RU')
 
