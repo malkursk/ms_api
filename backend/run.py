@@ -5,9 +5,9 @@
 
 import uvicorn
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine
-import models
-from seed import seed_database
+from .database import SessionLocal, engine
+from . import models
+from .seed import seed_database
 
 def check_existing_data():
     """Проверяет, есть ли уже данные в базе"""
@@ -53,7 +53,7 @@ def main():
     
     # Запускаем сервер
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

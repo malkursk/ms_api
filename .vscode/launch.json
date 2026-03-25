@@ -1,0 +1,35 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Run current file (venv)",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "env": {
+        "PATH": "${workspaceFolder}/ms_api/.venv/bin:${env:PATH}"
+      }
+    },
+    {
+      "name": "Python: Uvicorn main:app (venv)",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/ms_api/.venv/bin/python",
+      "args": [
+        "-m",
+        "uvicorn",
+        "ms_api.backend.main:app",
+        "--reload",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PATH": "${workspaceFolder}/ms_api/.venv/bin:${env:PATH}"
+      }
+    }
+  ]
+}
