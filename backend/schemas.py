@@ -109,3 +109,9 @@ class PlaceProfitability(BaseModel):
     location: str
     total_revenue: float
     total_moves: int
+
+class TraveledWingStats(BaseModel):
+    wing_id: int
+    wing_name: str
+    moves_count: int
+    total_logistics_cost: float

@@ -30,6 +30,19 @@ def read_owners(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     owners = crud.get_owners(db, skip=skip, limit=limit)
     return create_response_with_sql(owners)
 
+@router.get("/owners/filter/without-middle-name", tags=["👥 Владельцы"])
+def read_owners_without_middle_name(db: Session = Depends(get_db)):
+    """Получить владельцев без отчества"""
+    owners = crud.get_owners_without_middle_name(db)
+    return create_response_with_sql(owners)
+
+
+@router.get("/owners/filter/without-middle-name-born-after-1990", tags=["👥 Владельцы"])
+def read_owners_without_middle_name_born_after_1990(db: Session = Depends(get_db)):
+    """Получить владельцев без отчества, родившихся после 1990 года"""
+    owners = crud.get_owners_without_middle_name_born_after_1990(db)
+    return create_response_with_sql(owners)
+
 @router.get("/owners/{owner_id}", tags=["👥 Владельцы"])
 def read_owner(owner_id: int, db: Session = Depends(get_db)):
     """Получить информацию о конкретном владельце по ID"""
@@ -209,4 +222,12 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     result = crud.get_owners_with_specific_lastname(db)
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
+    return create_response_with_sql(result)
+
+@router.get("/analytics/most-traveled-wings", tags=["📊 Аналитика"])
+def get_most_traveled_wings(db: Session = Depends(get_db)):
+    """Самые путешествующие экспонаты: число перемещений и сумма логистических затрат"""
+    result = crud.get_most_traveled_wings(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Перемещения не найдены")
     return create_response_with_sql(result)
