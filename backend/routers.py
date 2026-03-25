@@ -210,3 +210,27 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+@router.get("/analytics/owners_without_middlename", tags=["📊 Аналитика"])
+def get_owners_without_middlename(db: Session = Depends(get_db)):
+    """Найти владельцев без отчества (middle_name IS NULL)"""
+    result = crud.get_owners_without_middlename(db)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Владельцев без отчества нет")
+    return create_response_with_sql(result)
+
+@router.get("/analytics/younger_owners_without_middlename", tags=["📊 Аналитика"])
+def get_owners_without_middlename(db: Session = Depends(get_db)):
+    """Показать владельцев без отчества, родившихся после 1990 года"""
+    result = crud.get_younger_owners_without_middlename(db)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Владельцев без отчества нет")
+    return create_response_with_sql(result)
+
+@router.get("/analytics/get_high_profit_wings", tags=["📊 Аналитика"])
+def get_high_profit_wings(db: Session = Depends(get_db)):
+    """Выявить высокорентабельные экспонаты для уникального торгового предложения"""
+    result = crud.get_high_profit_wings(db)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Высокорентабельные экспонаты не найдены")
+    return create_response_with_sql(result)

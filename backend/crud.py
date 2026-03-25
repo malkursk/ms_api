@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 import models
 import schemas
+from datetime import datetime
 
 def get_owner_with_most_wings(db: Session):
     result = (db.query(
@@ -192,3 +193,74 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+def get_owners_without_middlename(db: Session):
+    result = (
+        db.query(
+            models.Owner.id,
+            models.Owner.last_name,
+            models.Owner.first_name,
+            models.Owner.middle_name
+        )
+        .where(models.Owner.middle_name.is_(None))
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "last_name": r[1],
+            "first_name": r[2],
+            "middle_name": r[3]
+        }
+        for r in result
+    ]
+
+def get_younger_owners_without_middlename(db: Session):
+    result = (
+        db.query(
+            models.Owner.id,
+            models.Owner.last_name,
+            models.Owner.first_name,
+            models.Owner.middle_name,
+            models.Owner.birth_date
+        )
+        .where(
+        models.Owner.middle_name.is_(None), 
+        models.Owner.birth_date > datetime(1990, 1, 1)
+        )
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "last_name": r[1],
+            "first_name": r[2],
+            "middle_name": r[3],
+            "birth_date": r[4]
+        }
+        for r in result
+    ]
+
+def get_high_profit_wings(db: Session):
+    result = (
+        db.query(
+            models.Wing.name.label('wing_name'),
+            models.Wing.profit,
+            (models.Owner.first_name + " " + models.Owner.last_name).label('owner_name'),
+            models.Type.name.label('type_name')
+        )
+        .join(models.Owner, models.Wing.owner_id == models.Owner.id)
+        .join(models.Type, models.Wing.type_id == models.Type.id)
+        .filter(models.Wing.profit > 2.0)
+        .order_by(models.Wing.profit.desc())
+        .limit(20)
+        .all()
+    )
+    return [
+        {
+            "wing_name": r[0],
+            "profit": r[1],
+            "owner_name": r[2],
+            "type_name": r[3]
+        }
+        for r in result
+    ]
