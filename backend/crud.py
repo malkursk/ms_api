@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
+from datetime import date
 import models
 import schemas
 
@@ -192,3 +193,45 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+def get_owners_without_middle_name(db: Session):
+    return (
+        db.query(models.Owner)
+        .filter(models.Owner.middle_name.is_(None))
+        .all()
+    )
+
+
+def get_owners_without_middle_name_born_after_1990(db: Session):
+    return (
+        db.query(models.Owner)
+        .filter(
+            models.Owner.middle_name.is_(None),
+            models.Owner.birth_date >= date(1991, 1, 1)
+        )
+        .all()
+    )
+
+
+def get_most_traveled_wings(db: Session):
+    result = (
+        db.query(
+            models.Wing.id.label("wing_id"),
+            models.Wing.name.label("wing_name"),
+            func.count(models.Move.id).label("moves_count"),
+            func.coalesce(func.sum(models.Move.price), 0).label("total_logistics_cost")
+        )
+        .join(models.Move, models.Move.wing_id == models.Wing.id)
+        .group_by(models.Wing.id, models.Wing.name)
+        .order_by(desc("moves_count"), desc("total_logistics_cost"))
+        .all()
+    )
+
+    return [
+        schemas.TraveledWingStats(
+            wing_id=row.wing_id,
+            wing_name=row.wing_name,
+            moves_count=row.moves_count,
+            total_logistics_cost=float(row.total_logistics_cost)
+        )
+        for row in result
+    ]
