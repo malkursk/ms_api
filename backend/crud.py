@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, Float
 import models
 import schemas
 
@@ -220,6 +220,7 @@ def get_exhibit_types_counts(db: Session):
         .group_by(models.Type.id)
         .all()
     )
+
     return [
         {
             "id": r[0],
@@ -229,3 +230,25 @@ def get_exhibit_types_counts(db: Session):
         for r in result
     ]
 
+def get_marketing_efficiency(db: Session):
+    month_expr = func.strftime('%Y-%m', models.Move.dt).label('month')
+    results = (
+        db.query(
+            month_expr,
+            func.sum(models.Move.price).label('total_revenue'),
+            func.count(models.Move.id).label('campaigns_count'),
+            (func.cast(func.sum(models.Move.price), Float) / func.count(models.Move.id)).label('avg_efficiency')
+        )
+        .group_by(month_expr)
+        .order_by(desc('month'))
+        .all()
+    )
+    return [
+        {
+            "month": r[0],
+            "total_revenue": r[1],
+            "campaigns_count": r[2],
+            "avg_efficiency": r[3]
+        }
+        for r in results
+    ]

@@ -228,3 +228,11 @@ def get_exhibit_types_counts(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Данные о типах экспонатов не найдены")
     return create_response_with_sql(result)
 
+
+@router.get("/analytics/marketing_efficiency", tags=["📊 Аналитика"])
+def get_marketing_efficiency(db: Sessions = Depends(get_db)):
+    """Отследить эффективность рекламных кампаний через динамику доходов"""
+    result = crud.get_marketing_efficiency(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Данные о маркетинговой эффективности не найдены")
+    return create_response_with_sql(result)
