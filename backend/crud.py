@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, asc
 import models
 import schemas
 
@@ -192,3 +192,38 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+
+
+def get_exhibits_by_profit_range(db: Session, min_profit: float = 1.0, max_profit: float = 2.0):
+    # Простой уровень: фильтрация по диапазону
+    results = (
+        db.query(models.Wing)
+        .filter(models.Wing.profit >= min_profit, models.Wing.profit <= max_profit)
+        .all()
+    )
+    return results
+
+def get_oldest_low_profit_exhibits(db: Session):
+    results = (
+        db.query(
+            models.Wing.id,
+            models.Wing.name,
+            models.Wing.profit,
+            func.min(models.Move.dt).label("first_appearance")
+        )
+        .join(models.Move, models.Wing.id == models.Move.wing_id)
+        .filter(models.Wing.profit < 1.0)
+        .group_by(models.Wing.id)
+        .order_by(asc("first_appearance")) 
+        .limit(10)
+        .all()
+    )
+    return [
+        {
+            "id": r[0],
+            "name": r[1],
+            "profit": r[2],
+            "first_appearance": r[3]
+        }
+        for r in results
+    ]

@@ -210,3 +210,20 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+
+@router.get("/analytics/exhibits_profit_range", tags=["📊 Аналитика"])
+def get_exhibits_profit_range(db: Session = Depends(get_db)):
+    """Простой уровень: Вывести экспонаты с рентабельностью от 1.0 до 2.0"""
+    result = crud.get_exhibits_by_profit_range(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Экспонаты в заданном диапазоне рентабельности не найдены")
+    return create_response_with_sql(result)
+
+@router.get("/analytics/oldest_low_profit", tags=["📊 Аналитика"])
+def get_oldest_low_profit(db: Session = Depends(get_db)):
+    """Продвинутый уровень: Найти 10 самых старых экспонатов с низкой рентабельностью (profit < 1.0)"""
+    result = crud.get_oldest_low_profit_exhibits(db)
+    if not result:
+        raise HTTPException(status_code=404, detail="Данные не найдены")
+    return create_response_with_sql(result)
