@@ -210,3 +210,36 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+# ==================== ДЗ ====================
+@router.get("/my/paintings", tags=["Сейфуллаев"])
+def get_all_paintings(db: Session = Depends(get_db)):
+    """
+    Простой уровень: Вывести список всех картин (type_id = 1)
+    """
+    paintings = crud.get_paintings(db)
+    if not paintings:
+        raise HTTPException(status_code=404, detail="Картины не найдены")
+    return create_response_with_sql(paintings)
+
+
+@router.get("/my/paintings-top-profitable", tags=["Сейфуллаев"])
+def get_top_profitable_paintings(db: Session = Depends(get_db)):
+    """
+    Продвинутый уровень: Найти 10 самых рентабельных картин с показателем profit > 1.5
+    """
+    top_paintings = crud.get_top_profitable_paintings(db, limit=10, min_profit=1.5)
+    if not top_paintings:
+        raise HTTPException(status_code=404, detail="Рентабельные картины не найдены")
+    return create_response_with_sql(top_paintings)
+
+
+@router.get("/my/exhibits-distribution-by-category", tags=["Сейфуллаев"])
+def get_exhibit_distribution_by_category(db: Session = Depends(get_db)):
+    """
+    Понять распределение экспонатов по категориям для баланса рекламных активностей
+    """
+    distribution = crud.get_exhibit_distribution_by_category(db)
+    if not distribution:
+        raise HTTPException(status_code=404, detail="Нет данных о распределении экспонатов")
+    return create_response_with_sql(distribution)
