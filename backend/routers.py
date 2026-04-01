@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 import crud, schemas
@@ -210,3 +211,30 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+# ==================== ДОБАВЛЕННЫЙ ЭНДПОИНТ ====================
+@router.get("/analytics/owners-with-diverse-collections", tags=["📊 Аналитика"])
+def get_owners_with_diverse_collections(db: Session = Depends(get_db)):
+    """
+    Найти владельцев с разнообразными коллекциями (>3 типов экспонатов)
+    для кросс-селл предложений
+    """
+    result = db.execute(
+        text("""
+            SELECT o.id, o.last_name || ' ' || o.first_name, 
+                   COUNT(DISTINCT w.type_id), COUNT(w.id)
+            FROM owners o
+            JOIN wings w ON o.id = w.owner_id
+            GROUP BY o.id
+            HAVING COUNT(DISTINCT w.type_id) > 3
+            ORDER BY COUNT(DISTINCT w.type_id) DESC, COUNT(w.id) DESC
+        """)
+    ).fetchall()
+    
+    # Преобразуем результат в список словарей для удобного вывода
+    formatted_result = [
+        {"id": row[0], "full_name": row[1], "unique_types": row[2], "total_wings": row[3]}
+        for row in result
+    ]
+    
+    return create_response_with_sql(formatted_result)ы
