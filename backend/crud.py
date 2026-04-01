@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 import models
 import schemas
 
@@ -192,3 +192,48 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+# ==================== ДЗ ====================
+def get_paintings(db: Session):
+    """
+    Простой уровень: Вывести список всех картин (type_id = 1)
+    """
+    sql = text("""
+        SELECT id, name, owner_id, profit
+        FROM wings
+        WHERE type_id = 1
+    """)
+    result = db.execute(sql)
+    return [{"id": row[0], "name": row[1], "owner_id": row[2], "profit": row[3]} for row in result]
+
+
+def get_top_profitable_paintings(db: Session, limit: int = 10, min_profit: float = 1.5):
+    """
+    Продвинутый уровень: Найти 10 самых рентабельных картин с показателем profit > 1.5
+    """
+    sql = text("""
+        SELECT id, name, owner_id, profit
+        FROM wings
+        WHERE type_id = 1 AND profit > :min_profit
+        ORDER BY profit DESC
+        LIMIT :limit
+    """)
+    result = db.execute(sql, {"min_profit": min_profit, "limit": limit})
+    return [{"id": row[0], "name": row[1], "owner_id": row[2], "profit": row[3]} for row in result]
+
+
+def get_exhibit_distribution_by_category(db: Session):
+    """
+    Понять распределение экспонатов по категориям для баланса рекламных активностей
+    """
+    sql = text("""
+        SELECT
+            t.name AS category,
+            COUNT(w.id) AS exhibit_count,
+            ROUND(COUNT(w.id) * 100.0 / (SELECT COUNT(*) FROM wings), 2) AS percentage
+        FROM types t
+        LEFT JOIN wings w ON t.id = w.type_id
+        GROUP BY t.id, t.name
+        ORDER BY exhibit_count DESC
+    """)
+    result = db.execute(sql)
+    return [{"category": row[0], "exhibit_count": row[1], "percentage": row[2]} for row in result]
