@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 import models
 import schemas
+from datetime import datetime, timedelta
 
 def get_owner_with_most_wings(db: Session):
     result = (db.query(
@@ -192,3 +193,64 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+
+def get_owners_last_name_endswith_ova(db: Session):
+    owners = (
+        db.query(models.Owner)
+        .filter(models.Owner.last_name.like('%ова'))
+        .all()
+    )
+
+    return [
+        {
+            "id": owner.id,
+            "email": owner.email,
+            "first_name": owner.first_name,
+            "last_name": owner.last_name,
+            "middle_name": owner.middle_name,
+            "birth_date": owner.birth_date,
+        }
+        for owner in owners
+    ]
+
+
+def get_top5_youngest_owners_with_most_wings(db: Session):
+    rows = (
+        db.query(
+            models.Owner.id,
+            models.Owner.email,
+            models.Owner.first_name,
+            models.Owner.last_name,
+            models.Owner.middle_name,
+            models.Owner.birth_date,
+            func.count(models.Wing.id).label("wings_count")
+        )
+        .outerjoin(models.Wing, models.Wing.owner_id == models.Owner.id)
+        .group_by(
+            models.Owner.id,
+            models.Owner.email,
+            models.Owner.first_name,
+            models.Owner.last_name,
+            models.Owner.middle_name,
+            models.Owner.birth_date
+        )
+        .order_by(
+            models.Owner.birth_date.desc(),
+            func.count(models.Wing.id).desc()
+        )
+        .limit(5)
+        .all()
+    )
+
+    return [
+        {
+            "id": row.id,
+            "email": row.email,
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "middle_name": row.middle_name,
+            "birth_date": row.birth_date,
+            "wings_count": row.wings_count,
+        }
+        for row in rows
+    ]
