@@ -152,6 +152,13 @@ def read_type(type_id: int, db: Session = Depends(get_db)):
     return create_response_with_sql(wing_type)
 
 # ==================== АНАЛИТИКА (ANALYTICS) ====================
+@router.get("/analytics/top-5-expensive-moves-last-year", tags=["📊 Аналитика"])
+def get_top_5_expensive_moves_last_year(db: Session = Depends(get_db)):
+    """Показать 5 самых дорогих перемещений за последний год"""
+    result = crud.get_top_5_most_expensive_moves_last_year(db)
+    return create_response_with_sql(result)
+
+
 @router.get("/analytics/owner-most-wings", tags=["📊 Аналитика"])
 def get_owner_with_most_wings(db: Session = Depends(get_db)):
     """Владелец с наибольшим количеством экспонатов"""
@@ -209,4 +216,16 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     result = crud.get_owners_with_specific_lastname(db)
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
+    return create_response_with_sql(result)
+
+
+@router.get("/analytics/owners-last-name-ova", tags=["📊 Аналитика"])
+def get_owners_last_name_ova(db: Session = Depends(get_db)):
+    result = crud.get_owners_last_name_endswith_ova(db)
+    return create_response_with_sql(result)
+
+
+@router.get("/analytics/top5-youngest-owners-most-wings", tags=["📊 Аналитика"])
+def get_top5_youngest_owners_most_wings(db: Session = Depends(get_db)):
+    result = crud.get_top5_youngest_owners_with_most_wings(db)
     return create_response_with_sql(result)
