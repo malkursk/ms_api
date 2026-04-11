@@ -192,3 +192,45 @@ def get_owners_with_specific_lastname(db: Session):
         for r in result
     ]
 
+
+
+def get_types_with_izdelie(db):
+    return db.query(models.Type).filter(models.Type.name.ilike("%изделие%")).all()
+
+
+def get_type_counts(db):
+    return (
+        db.query(
+            models.Type.id.label("type_id"),
+            models.Type.name.label("type_name"),
+            func.count(models.Wing.id).label("items_count")
+        )
+        .outerjoin(models.Wing, models.Wing.type_id == models.Type.id)
+        .group_by(models.Type.id, models.Type.name)
+        .order_by(func.count(models.Wing.id).desc(), models.Type.name)
+        .all()
+    )
+
+
+def get_marketing_roi_by_type(db):
+    revenue = func.sum(models.Move.price * models.Wing.profit * models.Place.scale)
+    cost = func.sum(models.Move.price)
+    roi = ((revenue - cost) / cost) * 100
+
+    return (
+        db.query(
+            models.Type.id.label("type_id"),
+            models.Type.name.label("type_name"),
+            func.round(revenue, 2).label("total_revenue"),
+            func.round(cost, 2).label("marketing_cost"),
+            func.round(func.avg(models.Wing.profit), 2).label("avg_profit"),
+            func.round(roi, 2).label("roi_percent")
+        )
+        .join(models.Wing, models.Move.wing_id == models.Wing.id)
+        .join(models.Type, models.Wing.type_id == models.Type.id)
+        .join(models.Place, models.Move.place_id == models.Place.id)
+        .group_by(models.Type.id, models.Type.name)
+        .having(cost > 0)
+        .order_by(func.round(roi, 2).desc(), func.round(revenue, 2).desc())
+        .all()
+    )

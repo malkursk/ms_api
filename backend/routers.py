@@ -210,3 +210,24 @@ def get_owners_with_specific_lastname(db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="Таких фамилий нет")
     return create_response_with_sql(result)
+
+@router.get("/analytics/assignment-10-11", tags=["📊 Аналитика"])
+def get_assignment_10_11(db: Session = Depends(get_db)):
+    return create_response_with_sql({
+        "task10_1": [{"id": x.id, "name": x.name} for x in crud.get_types_with_izdelie(db)],
+        "task10_2": [
+            {"type_id": x.type_id, "type_name": x.type_name, "items_count": x.items_count}
+            for x in crud.get_type_counts(db)
+        ],
+        "task11": [
+            {
+                "type_id": x.type_id,
+                "type_name": x.type_name,
+                "total_revenue": x.total_revenue,
+                "marketing_cost": x.marketing_cost,
+                "avg_profit": x.avg_profit,
+                "roi_percent": x.roi_percent
+            }
+            for x in crud.get_marketing_roi_by_type(db)
+        ]
+    })
